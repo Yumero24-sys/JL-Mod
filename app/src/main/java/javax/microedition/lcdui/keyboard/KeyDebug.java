@@ -19,6 +19,8 @@ public final class KeyDebug {
 	public static final boolean ENABLED = true;
 	/** Generate keyRepeated() ourselves while a key is held and the system sends no repeats. */
 	public static final boolean SYNTH_REPEAT = true;
+    	/** Stop the game view from declaring itself a text editor (BB10 then sends raw key down/up). */
+	public static final boolean NO_TEXT_EDITOR = true;
 	/** Delay before the first synthetic repeat, ms. */
 	public static final long SYNTH_DELAY = 450;
 	/** Interval between synthetic repeats, ms. */

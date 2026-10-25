@@ -25,6 +25,7 @@ import android.view.inputmethod.InputConnection;
 import androidx.annotation.NonNull;
 
 import javax.microedition.lcdui.keyboard.DelKeyWorkaround;
+import javax.microedition.lcdui.keyboard.KeyDebug;
 
 public class GlesView extends GLSurfaceView {
 	private InputConnection mPublicInputConnection;
@@ -46,7 +47,17 @@ public class GlesView extends GLSurfaceView {
 	}
 
 	@Override
+	public boolean onCheckIsTextEditor() {
+		// On BB10 a text editor makes the physical keyboard send "typed text" (press+release at once,
+		// long press = symbol popup) instead of real key down/up events.
+		return !KeyDebug.NO_TEXT_EDITOR;
+	}
+
+	@Override
 	public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+		if (KeyDebug.NO_TEXT_EDITOR) {
+			return null;
+		}
 		if (mPublicInputConnection == null) {
 			mPublicInputConnection = new DelKeyWorkaround(this, false);
 		}
