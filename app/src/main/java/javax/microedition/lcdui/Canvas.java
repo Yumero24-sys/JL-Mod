@@ -32,8 +32,10 @@ import android.opengl.GLU;
 import android.opengl.GLUtils;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -67,6 +69,7 @@ import javax.microedition.lcdui.graphics.CanvasView;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 import javax.microedition.lcdui.graphics.GlesView;
 import javax.microedition.lcdui.graphics.ShaderProgram;
+import javax.microedition.lcdui.keyboard.KeyDebug;
 import javax.microedition.lcdui.keyboard.KeyMapper;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.lcdui.overlay.FpsCounter;
@@ -964,8 +967,47 @@ public abstract class Canvas extends Displayable {
 			overlayView = ContextHolder.getActivity().findViewById(R.id.overlay);
 		}
 
+		// Synthetic key repeat (see KeyDebug.SYNTH_REPEAT): midp key code -> running repeater
+		private final Handler repeatHandler = new Handler(Looper.getMainLooper());
+		private final SparseArray<Runnable> synthRepeats = new SparseArray<>();
+
+		private void startSynthRepeat(final int midpKeyCode) {
+			stopSynthRepeat(midpKeyCode);
+			final long startTime = SystemClock.uptimeMillis();
+			Runnable r = new Runnable() {
+				@Override
+				public void run() {
+					if (synthRepeats.get(midpKeyCode) != this
+							|| SystemClock.uptimeMillis() - startTime > KeyDebug.SYNTH_MAX) {
+						synthRepeats.remove(midpKeyCode);
+						return;
+					}
+					if (overlay == null || !overlay.keyRepeated(midpKeyCode)) {
+						postKeyRepeated(midpKeyCode);
+					}
+					if (KeyDebug.ENABLED) {
+						KeyDebug.logText("SYN-REPEAT " + midpKeyCode);
+					}
+					repeatHandler.postDelayed(this, KeyDebug.SYNTH_INTERVAL);
+				}
+			};
+			synthRepeats.put(midpKeyCode, r);
+			repeatHandler.postDelayed(r, KeyDebug.SYNTH_DELAY);
+		}
+
+		private void stopSynthRepeat(int midpKeyCode) {
+			Runnable r = synthRepeats.get(midpKeyCode);
+			if (r != null) {
+				repeatHandler.removeCallbacks(r);
+				synthRepeats.remove(midpKeyCode);
+			}
+		}
+
 		@Override
 		public boolean onKey(View v, int keyCode, KeyEvent event) {
+			if (KeyDebug.ENABLED) {
+				KeyDebug.log(event);
+			}
 			switch (event.getAction()) {
 				case KeyEvent.ACTION_DOWN -> {
 					return onKeyDown(keyCode, event);
@@ -999,7 +1041,12 @@ public abstract class Canvas extends Displayable {
 				if (overlay == null || !overlay.keyPressed(keyCode)) {
 					postKeyPressed(keyCode);
 				}
+				if (KeyDebug.SYNTH_REPEAT) {
+					startSynthRepeat(keyCode);
+				}
 			} else {
+				// the system does send real repeats, so the synthetic ones are not needed
+				stopSynthRepeat(keyCode);
 				if (overlay == null || !overlay.keyRepeated(keyCode)) {
 					postKeyRepeated(keyCode);
 				}
@@ -1012,6 +1059,7 @@ public abstract class Canvas extends Displayable {
 			if (midpKeyCode == 0) {
 				return false;
 			}
+			stopSynthRepeat(midpKeyCode);
 			if (overlay == null || !overlay.keyReleased(midpKeyCode)) {
 				postKeyReleased(midpKeyCode);
 			}
