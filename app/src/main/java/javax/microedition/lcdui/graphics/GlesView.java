@@ -18,6 +18,7 @@ package javax.microedition.lcdui.graphics;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.text.InputType;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -50,12 +51,18 @@ public class GlesView extends GLSurfaceView {
 	public boolean onCheckIsTextEditor() {
 		// On BB10 a text editor makes the physical keyboard send "typed text" (press+release at once,
 		// long press = symbol popup) instead of real key down/up events.
-		return !KeyDebug.NO_TEXT_EDITOR;
+		return KeyDebug.NUMBER_MODE || !KeyDebug.NO_TEXT_EDITOR;
 	}
 
 	@Override
 	public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
-		if (KeyDebug.NO_TEXT_EDITOR) {
+		if (KeyDebug.NUMBER_MODE) {
+			// Declare a numeric field, like the resolution field in settings:
+			// BB10 then repeats held keys and shows no symbol popup.
+			outAttrs.inputType = InputType.TYPE_CLASS_NUMBER;
+			outAttrs.imeOptions = EditorInfo.IME_ACTION_NONE
+					| EditorInfo.IME_FLAG_NO_EXTRACT_UI | EditorInfo.IME_FLAG_NO_FULLSCREEN;
+		} else if (KeyDebug.NO_TEXT_EDITOR) {
 			return null;
 		}
 		if (mPublicInputConnection == null) {

@@ -20,7 +20,9 @@ public final class KeyDebug {
 	/** Generate keyRepeated() ourselves while a key is held and the system sends no repeats. */
 	public static final boolean SYNTH_REPEAT = true;
     	/** Stop the game view from declaring itself a text editor (BB10 then sends raw key down/up). */
-	public static final boolean NO_TEXT_EDITOR = true;
+	public static final boolean NO_TEXT_EDITOR = false;
+    	/** Plan B: game view declares a numeric field so BB10 repeats held keys and shows no symbol popup. */
+	public static final boolean NUMBER_MODE = true;
 	/** Delay before the first synthetic repeat, ms. */
 	public static final long SYNTH_DELAY = 450;
 	/** Interval between synthetic repeats, ms. */
