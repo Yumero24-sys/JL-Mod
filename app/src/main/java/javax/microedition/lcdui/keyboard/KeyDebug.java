@@ -16,7 +16,7 @@ import javax.microedition.util.ContextHolder;
 
 public final class KeyDebug {
 	/** Show raw key events on screen (and in logcat, tag "KeyDebug"). */
-	public static final boolean ENABLED = true;
+	public static final boolean ENABLED = false;
 	/** Generate keyRepeated() ourselves while a key is held and the system sends no repeats. */
 	public static final boolean SYNTH_REPEAT = true;
     	/** Stop the game view from declaring itself a text editor (BB10 then sends raw key down/up). */
